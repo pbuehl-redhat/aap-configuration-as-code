@@ -1,6 +1,6 @@
 ---
 controller_job_templates:
-  - name: "galbi"
+  - name: "practice"
     description: ""
     organization: "Default"
     project: "AAP Best Practices"
