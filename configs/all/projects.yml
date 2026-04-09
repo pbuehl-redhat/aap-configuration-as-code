@@ -1,0 +1,6 @@
+---
+controller_projects:
+  - name: "AAP Best Practices"
+    organization: "Default"
+    scm_type: "git"
+    scm_url: "https://github.com/pbuehl-redhat/aap-configuration-as-code.git"

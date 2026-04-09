@@ -1,0 +1,4 @@
+awxkit>=24.0.0
+ansible-builder
+boto3>=1.26.0
+botocore>=1.29.0

@@ -1,0 +1,102 @@
+name: AAP CaC Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - development
+  pull_request:
+    branches:
+      - main
+      - development
+
+jobs:
+  # 1. Linting & Code Quality
+  lint:
+    name: Linting & Code Quality
+    runs-on: ubuntu-latest
+    container:
+      image: quay.io/ansible/creator-ee:latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Run yamllint
+        run: yamllint configs/
+
+      - name: Run ansible-lint
+        run: ansible-lint playbooks
+
+  # 2. Automated Secret Scanning
+  # security_scan:
+  #   name: Automated Secret Scanning
+  #   runs-on: ubuntu-latest
+  #   container:
+  #     image: gitguardian/ggshield:latest
+  #   steps:
+  #     - name: Checkout Code
+  #       uses: actions/checkout@v4
+  #       with:
+  #         fetch-depth: 0
+
+  #     - name: Run ggshield
+  #       run: ggshield secret scan ci
+  #       env:
+  #         GITGUARDIAN_API_KEY: ${{ secrets.GITGUARDIAN_API_KEY }}
+
+  # 3. Dry-Run API Simulation (Check Mode)
+  dry_run_validation:
+    name: Dry-Run API Simulation
+    #needs: [lint, security_scan]
+    needs: [lint]
+    runs-on: ubuntu-latest
+    container:
+      image: custom-johnlucca-ee:latest # Must be accessible by runner
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Check Mode Deployment
+        run: ansible-playbook -i inventory/inventory_dev.yml playbooks/deploy_cac.yml -e "target_env=dev" --check
+
+  # 4. Declarative Deployment - DEV (Auto on Merge)
+  deploy_development:
+    name: Declarative Deployment - DEV
+    needs: dry_run_validation
+    if: github.ref == 'refs/heads/development' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    environment: development
+    container:
+      image: custom-johnlucca-ee:latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Deploy to DEV
+        run: ansible-playbook -i inventory/inventory_dev.yml playbooks/deploy_cac.yml -e "target_env=dev"
+        env:
+          CONTROLLER_HOST: ${{ secrets.DEV_CONTROLLER_HOST }}
+          CONTROLLER_USERNAME: ${{ secrets.DEV_CONTROLLER_USERNAME }}
+          CONTROLLER_PASSWORD: ${{ secrets.DEV_CONTROLLER_PASSWORD }}
+
+  # 5. Declarative Deployment - PROD (Manual Gate via GitHub Environments)
+  deploy_production:
+    name: Declarative Deployment - PROD
+    needs: dry_run_validation
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: [https://prod-aap.johnlucca.local](https://prod-aap.johnlucca.local)
+    container:
+      image: custom-johnlucca-ee:latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Deploy to PROD
+        run: ansible-playbook -i inventory/inventory_prod.yml playbooks/deploy_cac.yml -e "target_env=prod"
+        env:
+          CONTROLLER_HOST: ${{ secrets.PROD_CONTROLLER_HOST }}
+          CONTROLLER_USERNAME: ${{ secrets.PROD_CONTROLLER_USERNAME }}
+          CONTROLLER_PASSWORD: ${{ secrets.PROD_CONTROLLER_PASSWORD }}

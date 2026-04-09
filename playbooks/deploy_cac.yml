@@ -1,0 +1,40 @@
+---
+- name: Declarative AAP Configuration Deployment
+  hosts: all
+  gather_facts: false
+  vars:
+    # Target environment defaults to 'dev' if not explicitly passed during execution
+    env: "{{ target_env | default('dev') }}"
+    # Enable comprehensive error logging for asynchronous API calls
+    aap_configuration_collect_logs: true
+    controller_host: "{{ lookup('ansible.builtin.env', 'CONTROLLER_HOST') }}"
+    controller_username: "{{ lookup('ansible.builtin.env', 'CONTROLLER_USERNAME') }}"
+    controller_password: "{{ lookup('ansible.builtin.env', 'CONTROLLER_PASSWORD') }}"
+    controller_validate_certs: "{{ lookup('ansible.builtin.env', 'CONTROLLER_VERIFY_SSL') | default('false') }}"
+
+  tasks:
+    - name: "Phase 1: Load Universal Baseline Configurations (/configs/all/)"
+      ansible.builtin.include_vars:
+        dir: "../configs/all"
+        extensions:
+          - 'yml'
+          - 'yaml'
+      tags: always
+
+    - name: "Phase 2: Load Environment-Specific Overrides (/configs/{{ env }}/)"
+      ansible.builtin.include_vars:
+        dir: "../configs/{{ env }}"
+        extensions:
+          - 'yml'
+          - 'yaml'
+      tags: always
+
+    - name: "Phase 3: Dispatch Configuration to AAP API"
+      ansible.builtin.include_role:
+        name: infra.aap_configuration.dispatch
+      tags: dispatch
+
+    - name: "Phase 4: Output Consolidated Execution Logs"
+      ansible.builtin.debug:
+        var: aap_configuration_role_errors
+      when: aap_configuration_role_errors is defined and aap_configuration_role_errors | length > 0

@@ -1,0 +1,28 @@
+---
+- name: Quick Export of AAP Projects (Direct API Method)
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars:
+    controller_host: "{{ lookup('ansible.builtin.env', 'CONTROLLER_HOST') }}"
+    controller_oauthtoken: "{{ lookup('ansible.builtin.env', 'CONTROLLER_OAUTH_TOKEN') }}"
+
+  tasks:
+    - name: Fetch all projects directly via raw API
+      ansible.builtin.uri:
+        # Note: If this 404s, your workshop is on AAP 2.4. Change the path to: /api/v2/projects/
+        url: "{{ controller_host }}/api/controller/v2/projects/"
+        method: GET
+        headers:
+          Authorization: "Bearer {{ controller_oauthtoken }}"
+        validate_certs: false
+        return_content: true
+      register: api_response
+
+    - name: Save the JSON/YAML payload to a local file
+      ansible.builtin.copy:
+        # We extract just the 'results' array so you don't get the pagination metadata
+        content: "{{ api_response.json.results | to_nice_yaml(width=50, explicit_start=true) }}"
+        dest: "./my_aap_projects.yml"
+        mode: "0700"
