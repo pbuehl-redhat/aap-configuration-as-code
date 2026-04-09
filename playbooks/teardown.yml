@@ -3,7 +3,6 @@
   hosts: all
   gather_facts: false
   vars:
-    # Target environment defaults to 'dev' if not explicitly passed during execution
     env: "{{ target_env | default('dev') }}"
 
   tasks:
