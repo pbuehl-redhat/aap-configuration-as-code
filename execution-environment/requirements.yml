@@ -2,6 +2,7 @@
 collections:
   - name: infra.aap_configuration
   - name: infra.aap_configuration_extended
+  - name: infra.controller_configuration
   - name: infra.aap_utilities
   # Explicitly pin the Red Hat certified collections
   - name: ansible.controller

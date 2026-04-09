@@ -1,39 +1,59 @@
 ---
 - name: Declarative AAP Configuration Deployment
-  hosts: all
+  hosts: localhost
+  connection: local
   gather_facts: false
   vars:
-    # Target environment defaults to 'dev' if not explicitly passed during execution
     env: "{{ target_env | default('dev') }}"
-    # Enable comprehensive error logging for asynchronous API calls
-    aap_configuration_collect_logs: true
-    controller_host: "{{ lookup('ansible.builtin.env', 'CONTROLLER_HOST') }}"
-    controller_oauthtoken: "{{ lookup('ansible.builtin.env', 'CONTROLLER_OAUTH_TOKEN') }}"
-    controller_validate_certs: "{{ lookup('ansible.builtin.env', 'CONTROLLER_VERIFY_SSL') | default('false') }}"
 
   tasks:
-    - name: "Phase 1: Load Universal Baseline Configurations (/configs/all/)"
+    - name: Load All Configuration Variables
       ansible.builtin.include_vars:
-        dir: "../configs/all"
-        extensions:
-          - 'yml'
-          - 'yaml'
-      tags: always
+        dir: "../configs/{{ item }}"
+        extensions: ['yml', 'yaml']
+      loop: ['all', "{{ env }}"]
 
-    - name: "Phase 2: Load Environment-Specific Overrides (/configs/{{ env }}/)"
-      ansible.builtin.include_vars:
-        dir: "../configs/{{ env }}"
-        extensions:
-          - 'yml'
-          - 'yaml'
-      tags: always
+    # -------------------------------------------------------------------------
+    # DEPLOY PHASE (Bottom-Up / Dependency Order)
+    # -------------------------------------------------------------------------
 
-    - name: "Phase 3: Dispatch Configuration to AAP API"
-      ansible.builtin.include_role:
-        name: infra.aap_configuration.dispatch
-      tags: dispatch
+    - name: "Deploy: Organizations"
+      ansible.controller.organization:
+        name: "{{ item.name }}"
+        description: "{{ item.description | default(omit) }}"
+        state: present
+      loop: "{{ controller_organizations | default([]) }}"
 
-    - name: "Phase 4: Output Consolidated Execution Logs"
-      ansible.builtin.debug:
-        var: aap_configuration_role_errors
-      when: aap_configuration_role_errors is defined and aap_configuration_role_errors | length > 0
+    - name: "Deploy: Projects"
+      ansible.controller.project:
+        name: "{{ item.name }}"
+        organization: "{{ item.organization }}"
+        scm_type: "{{ item.scm_type | default('git') }}"
+        scm_url: "{{ item.scm_url }}"
+        scm_branch: "{{ item.scm_branch | default(omit) }}"
+        wait: true
+        state: present
+      loop: "{{ controller_projects | default([]) }}"
+
+    - name: "Deploy: Inventories"
+      ansible.controller.inventory:
+        name: "{{ item.name }}"
+        organization: "{{ item.organization }}"
+        state: present
+      loop: "{{ controller_inventories | default([]) }}"
+
+    - name: "Deploy: Job Templates"
+      ansible.controller.job_template:
+        name: "{{ item.name }}"
+        project: "{{ item.project }}"
+        playbook: "{{ item.playbook }}"
+        inventory: "{{ item.inventory }}"
+        state: present
+      loop: "{{ controller_job_templates | default([]) }}"
+
+    - name: "Deploy: Workflow Job Templates"
+      ansible.controller.workflow_job_template:
+        name: "{{ item.name }}"
+        organization: "{{ item.organization }}"
+        state: present
+      loop: "{{ controller_workflow_job_templates | default([]) }}"
