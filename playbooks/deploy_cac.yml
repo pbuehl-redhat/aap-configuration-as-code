@@ -8,8 +8,7 @@
     # Enable comprehensive error logging for asynchronous API calls
     aap_configuration_collect_logs: true
     controller_host: "{{ lookup('ansible.builtin.env', 'CONTROLLER_HOST') }}"
-    controller_username: "{{ lookup('ansible.builtin.env', 'CONTROLLER_USERNAME') }}"
-    controller_password: "{{ lookup('ansible.builtin.env', 'CONTROLLER_PASSWORD') }}"
+    controller_oauthtoken: "{{ lookup('ansible.builtin.env', 'CONTROLLER_OAUTH_TOKEN') }}"
     controller_validate_certs: "{{ lookup('ansible.builtin.env', 'CONTROLLER_VERIFY_SSL') | default('false') }}"
 
   tasks:

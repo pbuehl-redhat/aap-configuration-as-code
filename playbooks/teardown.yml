@@ -1,0 +1,81 @@
+---
+- name: Declarative AAP Configuration Teardown (Removal)
+  hosts: all
+  gather_facts: false
+  vars:
+    # Target environment defaults to 'dev' if not explicitly passed during execution
+    env: "{{ target_env | default('dev') }}"
+
+  tasks:
+    - name: "Phase 1: Load Universal Baseline Configurations (/configs/all/)"
+      ansible.builtin.include_vars:
+        dir: "../configs/all"
+        extensions:
+          - 'yml'
+          - 'yaml'
+      tags: always
+
+    - name: "Phase 2: Load Environment-Specific Overrides (/configs/{{ env }}/)"
+      ansible.builtin.include_vars:
+        dir: "../configs/{{ env }}"
+        extensions:
+          - 'yml'
+          - 'yaml'
+      tags: always
+
+    # -------------------------------------------------------------------------
+    # TEARDOWN PHASE: Reverse Dependency Order
+    # (Workflows -> Job Templates -> Inventories -> Projects -> Orgs)
+    # -------------------------------------------------------------------------
+
+    - name: "Phase 3: Remove Workflow Job Templates"
+      ansible.controller.workflow_job_template:
+        name: "{{ item.name }}"
+        state: absent
+      loop: "{{ controller_workflow_job_templates | default([]) }}"
+      tags: teardown
+
+    - name: "Phase 4: Remove Job Templates"
+      ansible.controller.job_template:
+        name: "{{ item.name }}"
+        state: absent
+      loop: "{{ controller_job_templates | default([]) }}"
+      tags: teardown
+
+    - name: "Phase 5: Remove Inventory Sources"
+      ansible.controller.inventory_source:
+        name: "{{ item.name }}"
+        inventory: "{{ item.inventory }}"
+        state: absent
+      loop: "{{ controller_inventory_sources | default([]) }}"
+      tags: teardown
+
+    - name: "Phase 6: Remove Inventories"
+      ansible.controller.inventory:
+        name: "{{ item.name }}"
+        state: absent
+      loop: "{{ controller_inventories | default([]) }}"
+      tags: teardown
+
+    - name: "Phase 7: Remove Projects"
+      ansible.controller.project:
+        name: "{{ item.name }}"
+        state: absent
+      loop: "{{ controller_projects | default([]) }}"
+      tags: teardown
+
+    - name: "Phase 8: Remove Roles / RBAC"
+      ansible.controller.role:
+        user: "{{ item.user | default(omit) }}"
+        team: "{{ item.target_team | default(omit) }}"
+        role: "{{ item.name }}"
+        state: absent
+      loop: "{{ controller_roles | default([]) }}"
+      tags: teardown
+
+    - name: "Phase 9: Remove Organizations"
+      ansible.controller.organization:
+        name: "{{ item.name }}"
+        state: absent
+      loop: "{{ controller_organizations | default([]) }}"
+      tags: teardown
