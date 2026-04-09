@@ -48,6 +48,7 @@ jobs:
     name: Dry-Run API Simulation
     needs: [lint]
     runs-on: ubuntu-latest
+    environment: development
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
