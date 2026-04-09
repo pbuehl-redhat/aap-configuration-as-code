@@ -1,6 +1,7 @@
+---
 name: AAP CaC Pipeline
 
-on:
+"on":
   push:
     branches:
       - main
@@ -20,6 +21,11 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+
+      - name: Install Ansible Galaxy Collections
+        run: >
+          ansible-galaxy collection install
+          -r execution-environment/requirements.yml
 
       - name: Run yamllint
         run: yamllint configs/
@@ -48,10 +54,14 @@ jobs:
           pip install ansible requests
 
       - name: Install Ansible Galaxy Collections
-        run: ansible-galaxy collection install -r requirements.yml
+        run: >
+          ansible-galaxy collection install
+          -r execution-environment/requirements.yml
 
       - name: Check Mode Deployment
-        run: ansible-playbook -i inventory/inventory_dev.yml playbooks/deploy_cac.yml -e "target_env=dev" --check
+        run: >
+          ansible-playbook -i inventory/inventory_dev.yml
+          playbooks/deploy_cac.yml -e "target_env=dev" --check
         env:
           CONTROLLER_HOST: ${{ secrets.DEV_CONTROLLER_HOST }}
           CONTROLLER_OAUTH_TOKEN: ${{ secrets.DEV_CONTROLLER_OAUTH_TOKEN }}
@@ -80,10 +90,14 @@ jobs:
           pip install ansible requests
 
       - name: Install Ansible Galaxy Collections
-        run: ansible-galaxy collection install -r requirements.yml
+        run: >
+          ansible-galaxy collection install
+          -r execution-environment/requirements.yml
 
       - name: Deploy to DEV
-        run: ansible-playbook -i inventory/inventory_dev.yml playbooks/deploy_cac.yml -e "target_env=dev"
+        run: >
+          ansible-playbook -i inventory/inventory_dev.yml
+          playbooks/deploy_cac.yml -e "target_env=dev"
         env:
           CONTROLLER_HOST: ${{ secrets.DEV_CONTROLLER_HOST }}
           CONTROLLER_OAUTH_TOKEN: ${{ secrets.DEV_CONTROLLER_OAUTH_TOKEN }}
@@ -97,7 +111,6 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: production
-      url: "https://prod-aap.johnlucca.local"
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -114,10 +127,14 @@ jobs:
           pip install ansible requests
 
       - name: Install Ansible Galaxy Collections
-        run: ansible-galaxy collection install -r execution-environment/requirements.yml
+        run: >
+          ansible-galaxy collection install
+          -r execution-environment/requirements.yml
 
       - name: Deploy to PROD
-        run: ansible-playbook -i inventory/inventory_prod.yml playbooks/deploy_cac.yml -e "target_env=prod"
+        run: >
+          ansible-playbook -i inventory/inventory_prod.yml
+          playbooks/deploy_cac.yml -e "target_env=prod"
         env:
           CONTROLLER_HOST: ${{ secrets.PROD_CONTROLLER_HOST }}
           CONTROLLER_OAUTH_TOKEN: ${{ secrets.PROD_CONTROLLER_OAUTH_TOKEN }}

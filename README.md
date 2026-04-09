@@ -57,8 +57,7 @@ To run the pipeline, you must configure the following Secrets in your GitHub rep
 | `DEV_CONTROLLER_HOST` | API URL for the Dev AAP Instance |
 | `DEV_CONTROLLER_USERNAME` | Admin username for Dev |
 | `DEV_CONTROLLER_PASSWORD` | Admin password for Dev |
-| `PROD_CONTROLLER_HOST` | API URL for the Prod AAP Instance |
-| `GITGUARDIAN_API_KEY` | (Optional) For security scanning |
+| `PROD_CONTROLLER_HOST` | API URL for the Prod AAP Instance
 
 ### 2. Local Development
 Before committing, install the pre-commit hooks to ensure code quality:
@@ -82,6 +81,3 @@ ansible-playbook -i inventory/inventory_dev.yml playbooks/deploy_cac.yml -e "tar
 ```bash
 ansible-playbook -i inventory/inventory_prod.yml playbooks/deploy_cac.yml -e "target_env=prod"
 ```
-
----
-**Maintained by:** Johnlucca Platform Engineering Team
