@@ -1,5 +1,5 @@
 ---
-controller_job_templates:
+controller_job_templates_env:
   - name: "practice1"
     description: ""
     organization: "Default"
