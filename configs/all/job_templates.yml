@@ -1,6 +1,6 @@
 ---
-controller_job_templates_env:
-  - name: "practice"
+controller_job_templates_all:
+  - name: "practice0"
     description: ""
     organization: "Default"
     project: "AAP Best Practices"

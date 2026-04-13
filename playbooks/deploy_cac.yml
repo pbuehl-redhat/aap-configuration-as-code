@@ -5,55 +5,68 @@
   gather_facts: false
   vars:
     env: "{{ target_env | default('dev') }}"
+    aap_configuration_collect_logs: true
 
   tasks:
-    - name: Load All Configuration Variables
+    - name: "Phase 1: Load Universal Baseline Configurations"
       ansible.builtin.include_vars:
-        dir: "../configs/{{ item }}"
+        dir: "../configs/all"
         extensions: ['yml', 'yaml']
-      loop: ['all', "{{ env }}"]
+      tags: always
 
-    # -------------------------------------------------------------------------
-    # DEPLOY PHASE (Bottom-Up / Dependency Order)
-    # -------------------------------------------------------------------------
+    - name: "Phase 2: Load Environment-Specific Overrides"
+      ansible.builtin.include_vars:
+        dir: "../configs/{{ env }}"
+        extensions: ['yml', 'yaml']
+      tags: always
 
-    - name: "Deploy: Organizations"
-      ansible.controller.organization:
-        name: "{{ item.name }}"
-        description: "{{ item.description | default(omit) }}"
-        state: present
-      loop: "{{ controller_organizations | default([]) }}"
+    - name: "Phase 3: Merge Global and Environment Lists"
+      ansible.builtin.set_fact:
+        controller_organizations: >-
+          {{ (controller_organizations_all | default([])) +
+            (controller_organizations_env | default([])) }}
 
-    - name: "Deploy: Projects"
-      ansible.controller.project:
-        name: "{{ item.name }}"
-        organization: "{{ item.organization }}"
-        scm_type: "{{ item.scm_type | default('git') }}"
-        scm_url: "{{ item.scm_url }}"
-        scm_branch: "{{ item.scm_branch | default(omit) }}"
-        wait: true
-        state: present
-      loop: "{{ controller_projects | default([]) }}"
+        controller_inventories: >-
+          {{ (controller_inventories_all | default([])) +
+            (controller_inventories_env | default([])) }}
 
-    - name: "Deploy: Inventories"
-      ansible.controller.inventory:
-        name: "{{ item.name }}"
-        organization: "{{ item.organization }}"
-        state: present
-      loop: "{{ controller_inventories | default([]) }}"
+        controller_groups: >-
+          {{ (controller_groups_all | default([])) +
+            (controller_groups_env | default([])) }}
 
-    - name: "Deploy: Job Templates"
-      ansible.controller.job_template:
-        name: "{{ item.name }}"
-        project: "{{ item.project }}"
-        playbook: "{{ item.playbook }}"
-        inventory: "{{ item.inventory }}"
-        state: present
-      loop: "{{ controller_job_templates | default([]) }}"
+        controller_hosts: >-
+          {{ (controller_hosts_all | default([])) +
+            (controller_hosts_env | default([])) }}
 
-    - name: "Deploy: Workflow Job Templates"
-      ansible.controller.workflow_job_template:
-        name: "{{ item.name }}"
-        organization: "{{ item.organization }}"
-        state: present
-      loop: "{{ controller_workflow_job_templates | default([]) }}"
+        controller_inventory_sources: >-
+          {{ (controller_inventory_sources_all | default([])) +
+            (controller_inventory_sources_env | default([])) }}
+
+        controller_projects: >-
+          {{ (controller_projects_all | default([])) +
+            (controller_projects_env | default([])) }}
+
+        controller_job_templates: >-
+          {{ (controller_job_templates_all | default([])) +
+            (controller_job_templates_env | default([])) }}
+
+        controller_workflow_job_templates: >-
+          {{ (controller_workflow_job_templates_all | default([])) +
+            (controller_workflow_job_templates_env | default([])) }}
+
+        controller_roles: >-
+          {{ (controller_roles_all | default([])) +
+            (controller_roles_env | default([])) }}
+      tags: always
+
+    - name: "Phase 4: Dispatch Configuration to AAP API"
+      ansible.builtin.include_role:
+        name: infra.aap_configuration.dispatch
+      tags: dispatch
+
+    - name: "Phase 5: Output Consolidated Execution Logs"
+      ansible.builtin.debug:
+        var: aap_configuration_role_errors
+      when:
+        - aap_configuration_role_errors is defined
+        - aap_configuration_role_errors | length > 0
