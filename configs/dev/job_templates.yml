@@ -1,10 +1,26 @@
 ---
 controller_job_templates:
-  - name: "galbi"
+  - name: "practice1"
     description: ""
     organization: "Default"
     project: "AAP Best Practices"
     playbook: "playbooks/teardown.yml"
+    inventory: "Demo Inventory"
+    job_type: "run"
+    verbosity: 0
+    timeout: 0
+    allow_simultaneous: false
+    use_fact_cache: false
+    survey_enabled: false
+    become_enabled: false
+    diff_mode: false
+    ask_variables_on_launch: false
+
+  - name: "practice2"
+    description: ""
+    organization: "Default"
+    project: "AAP Best Practices"
+    playbook: "playbooks/collect.yml"
     inventory: "Demo Inventory"
     job_type: "run"
     verbosity: 0
