@@ -1,0 +1,7 @@
+---
+controller_execution_environments_env:
+  - name: "Johnlucca_Custom_EE_Development"
+    description: "Development Execution Environment pointing to latest"
+    image: "ghcr.io/pbuehl-redhat/aap-configuration-as-code/johnlucca-ee:latest"
+    organization: "Johnlucca_Global_Admin"
+    pull: "always"
