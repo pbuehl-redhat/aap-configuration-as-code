@@ -9,3 +9,11 @@ dependencies:
   galaxy: requirements.yml
   python: requirements.txt
   system: bindep.txt
+
+additional_build_files:
+  - src: ansible.cfg
+    dest: configs
+
+additional_build_steps:
+  prepend_base:
+    - ENV ANSIBLE_CONFIG=/build/configs/ansible.cfg
