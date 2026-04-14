@@ -53,7 +53,11 @@ jobs:
       - name: Build and Push EE Image (SHA Tag)
         run: |
           cd execution-environment
-          ansible-builder build -t ${{ env.IMAGE_NAME }}:${{ github.sha }}
+
+          # Pass the Red Hat token dynamically as a build argument
+          ansible-builder build -t ${{ env.IMAGE_NAME }}:${{ github.sha }} \
+            --build-arg ANSIBLE_GALAXY_SERVER_AUTOMATION_HUB_TOKEN=${{ secrets.AH_TOKEN }}
+
           docker push ${{ env.IMAGE_NAME }}:${{ github.sha }}
 
       - name: Push Latest Tag (Main branch only)
