@@ -10,10 +10,17 @@ dependencies:
   python: requirements.txt
   system: bindep.txt
 
+options:
+  package_manager_path: /usr/bin/dnf
+
 additional_build_files:
   - src: ansible.cfg
     dest: configs
 
 additional_build_steps:
   prepend_base:
+    # 2. This is the crucial missing link:
+    # It takes the --build-arg and makes it a real ENV var for the install steps
+    - ARG ANSIBLE_GALAXY_SERVER_AUTOMATION_HUB_TOKEN
+    - ENV ANSIBLE_GALAXY_SERVER_AUTOMATION_HUB_TOKEN=${ANSIBLE_GALAXY_SERVER_AUTOMATION_HUB_TOKEN}
     - ENV ANSIBLE_CONFIG=/build/configs/ansible.cfg
