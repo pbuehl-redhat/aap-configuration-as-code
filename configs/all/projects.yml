@@ -1,5 +1,5 @@
 ---
-controller_projects:
+controller_projects_all:
   - name: "AAP Best Practices"
     organization: "Default"
     scm_type: "git"
