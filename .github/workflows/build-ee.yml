@@ -29,7 +29,8 @@ jobs:
         env:
           AH_TOKEN: ${{ secrets.AH_TOKEN }}
         run: |
-          cat <<EOF > /execution-environment/ansible.cfg
+          cd execution-environment
+          cat <<EOF > ansible.cfg
           [galaxy]
           server_list = automation_hub, release
 
