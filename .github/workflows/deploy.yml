@@ -47,7 +47,7 @@ jobs:
       - name: Build EE Image
         run: |
           cd execution-environment
-          sed -i "/auth_url/a token=${{ secrets.REDHAT_OFFLINE_TOKEN }}" ansible.cfg
+          sed -i "/auth_url/a token=${{ secrets.AH_TOKEN }}" ansible.cfg
           ansible-builder build -t ${{ env.IMAGE_NAME }}:${{ github.sha }} --container-runtime podman
 
       # 2. Execute the Push-to-PAH Script
