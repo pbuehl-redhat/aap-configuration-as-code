@@ -31,7 +31,7 @@ jobs:
   build_ee:
     name: Build Execution Environment
     needs: [lint]
-    runs-on: [self-hosted, rhel]
+    runs-on: [ubuntu-latest]
     permissions:
       contents: read
       packages: write
