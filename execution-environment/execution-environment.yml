@@ -6,6 +6,11 @@ images:
     name: quay.io/centos/centos:stream9
 
 dependencies:
+  # 1. Tell the builder to install ansible-core via pip first
+  ansible_core:
+    package_pip: ansible-core
+
+  # 2. Then it will process your galaxy requirements
   galaxy: requirements.yml
 
 options:
