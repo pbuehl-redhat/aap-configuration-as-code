@@ -48,6 +48,7 @@ jobs:
         run: |
           cd execution-environment
           sed -i "/auth_url/a token=${{ secrets.AH_TOKEN }}" ansible.cfg
+          cat ansible.cfg
           ansible-builder build -t ${{ env.IMAGE_NAME }}:${{ github.sha }} --container-runtime podman
 
       # 2. Execute the Push-to-PAH Script
