@@ -29,7 +29,7 @@ jobs:
         env:
           AH_TOKEN: ${{ secrets.AH_TOKEN }}
         run: |
-          cat <<EOF > ansible.cfg
+          cat <<EOF > /execution-environment/ansible.cfg
           [galaxy]
           server_list = automation_hub, release
 
@@ -44,6 +44,7 @@ jobs:
 
       - name: Build Execution Environment
         run: |
+          cd execution-environment
           ansible-builder build -t my-custom-ee:latest -v 3
 
       - name: Verify Image
