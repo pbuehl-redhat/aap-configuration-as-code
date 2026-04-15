@@ -3,7 +3,8 @@ name: Build Ansible Execution Environment
 
 on:
   push:
-    branches: ["main"]
+    branches:
+      - '**'
   workflow_dispatch:
 
 jobs:
