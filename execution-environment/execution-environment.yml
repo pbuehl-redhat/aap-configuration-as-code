@@ -1,17 +1,34 @@
 ---
 version: 3
 
+options:
+  package_manager_path: /usr/bin/microdnf
+
+additional_build_files:
+  - src: ansible.cfg
+    dest: configs
+  - src: galaxy-rh-token
+    dest: configs
+
 images:
   base_image:
-    name: quay.io/centos/centos:stream9
+    name: registry.redhat.io/ansible-automation-platform-26/ee-minimal-rhel9:latest
 
 dependencies:
-  # 1. Tell the builder to install ansible-core via pip first
   ansible_core:
     package_pip: ansible-core
-
-  # 2. Then it will process your galaxy requirements
+  ansible_runner:
+    package_pip: ansible-runner
   galaxy: requirements.yml
+  # python: requirements-python.txt
+  system: ee/bindep.txt
 
-options:
-  package_manager_path: /usr/bin/dnf
+additional_build_steps:
+  prepend_galaxy:
+    - COPY _build/configs/ansible.cfg /etc/ansible/ansible.cfg
+    - COPY _build/configs/galaxy-rh-token /etc/ansible/rh_token
+    - RUN chmod 600 /etc/ansible/rh_token
+  append_base: |
+    RUN microdnf install -y git && microdnf clean all
+    RUN curl -fsSL https://rpm.releases.hashicorp.com/RHEL/hashicorp.repo -o /etc/yum.repos.d/hashicorp.repo
+    RUN microdnf install -y terraform && microdnf clean all

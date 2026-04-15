@@ -4,7 +4,7 @@ name: Build Ansible Execution Environment
 on:
   push:
     branches:
-      - '**'
+      - "**"
   workflow_dispatch:
 
 jobs:
@@ -23,13 +23,20 @@ jobs:
       - name: Install ansible-builder
         run: pip install ansible-builder
 
-      - name: Create ansible.cfg for Automation Hub Auth
-        # We generate the ansible.cfg here so the token isn't stored in source control.
-        # ansible-builder will automatically pick this up during the build process.
+      - name: Log in to Red Hat Registry
+        uses: docker/login-action@v3
+        with:
+          registry: https://aap-aap.apps.cluster-wf7cj-1.dynamic.redhatworkshops.io
+          username: ${{ secrets.PAH_USERNAME }}
+          password: ${{ secrets.PAH_PASSWORD }}
+
+      - name: Create Ansible Auth Files
+        # Tells the runner to execute this step inside your subdirectory
+        working-directory: execution-environment
         env:
           AH_TOKEN: ${{ secrets.AH_TOKEN }}
         run: |
-          cd execution-environment
+          echo -n "$AH_TOKEN" > galaxy-rh-token
           cat <<EOF > ansible.cfg
           [galaxy]
           server_list = automation_hub, release
@@ -37,31 +44,18 @@ jobs:
           [galaxy_server.automation_hub]
           url=https://cloud.redhat.com/api/automation-hub/
           auth_url=https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token
-          token=$AH_TOKEN
+          token_path=/etc/ansible/rh_token
 
           [galaxy_server.release]
           url=https://galaxy.ansible.com/
           EOF
 
       - name: Build Execution Environment
+        # Runs ansible-builder inside the subdirectory where your .yml lives
+        working-directory: execution-environment
         run: |
-          cd execution-environment
           ansible-builder build -t my-custom-ee:latest -v 3
 
       - name: Verify Image
         run: |
           docker images | grep my-custom-ee
-
-      # OPTIONAL: Add steps here to log in to a registry (like Quay.io or GHCR)
-      # and push your newly built image.
-      # - name: Log in to GitHub Container Registry
-      #   uses: docker/login-action@v3
-      #   with:
-      #     registry: ghcr.io
-      #     username: ${{ github.actor }}
-      #     password: ${{ secrets.GITHUB_TOKEN }}
-      #
-      # - name: Push to GHCR
-      #   run: |
-      #     docker tag my-custom-ee:latest ghcr.io/${{ github.repository }}/my-custom-ee:latest
-      #     docker push ghcr.io/${{ github.repository }}/my-custom-ee:latest
