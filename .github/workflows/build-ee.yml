@@ -26,7 +26,7 @@ jobs:
       - name: Log in to Red Hat Registry
         uses: docker/login-action@v3
         with:
-          registry: https://aap-aap.apps.cluster-wf7cj-1.dynamic.redhatworkshops.io
+          registry: quay.io
           username: ${{ secrets.PAH_USERNAME }}
           password: ${{ secrets.PAH_PASSWORD }}
 
