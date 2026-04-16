@@ -105,7 +105,7 @@ jobs:
     environment: development
     container:
       image: ghcr.io/${{ github.repository }}/cac-ee:${{ github.sha }}
-      options: --user root    # <--- ADD THIS LINE
+      options: --user root
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
@@ -129,6 +129,7 @@ jobs:
     environment: development
     container:
       image: ghcr.io/${{ github.repository }}/cac-ee:${{ github.sha }}
+      options: --user root
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
@@ -152,6 +153,7 @@ jobs:
       name: production
     container:
       image: ghcr.io/${{ github.repository }}/cac-ee:${{ github.sha }}
+      options: --user root
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
