@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - '**'
+  workflow_dispatch:
   pull_request:
     branches:
       - '**'
@@ -36,51 +37,55 @@ jobs:
       contents: read
       packages: write
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
       - name: Set up Python
         uses: actions/setup-python@v5
-        with: {python-version:'3.10'}
+        with:
+          python-version: '3.11'
+
       - name: Install ansible-builder
         run: pip install ansible-builder
 
-      # 1. Build the EE locally with ansible-builder using podman
-      - name: Build EE Image
-        run: |
-          cd execution-environment
-          sed -i "/auth_url/a token=${{ secrets.AH_TOKEN }}" ansible.cfg
-          cat ansible.cfg
-          ansible-builder build -t ${{ env.IMAGE_NAME }}:${{ github.sha }} --container-runtime podman
+      - name: Log in to Red Hat Registry
+        uses: docker/login-action@v3
+        with:
+          registry: registry.redhat.io
+          username: ${{ secrets.PAH_USERNAME }}
+          password: ${{ secrets.PAH_PASSWORD }}
 
-      # 2. Execute the Push-to-PAH Script
-      - name: Push to Private Automation Hub
-        run: |
-          cd execution-environment
-          chmod +x push_to_pah.sh
-          ./push_to_pah.sh
+      - name: Create Ansible Auth Files
+        working-directory: execution-environment
         env:
-          # Tell the script exactly which image we just built
-          LOCAL_IMAGE: ${{ env.IMAGE_NAME }}:${{ github.sha }}
-          # Force Podman as the runtime for RHEL runners
-          CONTAINER_RUNTIME: "podman"
-          # Hub Configuration (Configure these as Secrets/Variables in GitHub)
-          PAH_REGISTRY: ${{ vars.PAH_REGISTRY }}
-          PAH_NAMESPACE: "johnlucca"
-          PAH_IMAGE_NAME: "johnlucca-ee"
-          PAH_USERNAME: ${{ secrets.PAH_USERNAME }}
-          PAH_PASSWORD: ${{ secrets.PAH_PASSWORD }}
-          PAH_TLS_VERIFY: "false"
-
-      # 3. Fallback/Backup: Also push to GHCR using podman
-      - name: Log in to GHCR & Push Backup
+          AH_TOKEN: ${{ secrets.AH_TOKEN }}
         run: |
-          podman login ghcr.io -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
-          podman push ${{ env.IMAGE_NAME }}:${{ github.sha }}
+          cat <<EOF > ansible.cfg
+          [galaxy]
+          server_list = published, validated, release
 
-      - name: Push Latest Tag (Main branch only)
-        if: github.ref == 'refs/heads/main'
+          [galaxy_server.published]
+          url=https://console.redhat.com/api/automation-hub/content/published/
+          auth_url=https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token
+          token=$AH_TOKEN
+
+          [galaxy_server.validated]
+          url=https://console.redhat.com/api/automation-hub/content/validated/
+          auth_url=https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token
+          token=$AH_TOKEN
+
+          [galaxy_server.release]
+          url=https://galaxy.ansible.com/
+          EOF
+
+      - name: Build Execution Environment
+        working-directory: execution-environment
         run: |
-          podman tag ${{ env.IMAGE_NAME }}:${{ github.sha }} ${{ env.IMAGE_NAME }}:latest
-          podman push ${{ env.IMAGE_NAME }}:latest
+          ansible-builder build -t my-custom-ee:latest -v 3
+
+      - name: Verify Image
+        run: |
+          podman images | grep localhost/my-custom-ee
 
   dry_run_validation:
     name: Dry-Run API Simulation
