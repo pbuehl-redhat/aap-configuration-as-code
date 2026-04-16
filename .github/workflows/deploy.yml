@@ -140,6 +140,7 @@ jobs:
             -e "target_env=dev" \
             -e "ee_image_tag=${{ github.sha }}"
         env:
+          IMAGE_NAME: ghcr.io/pbuehl-redhat/aap-configuration-as-code/cac-ee
           CONTROLLER_HOST: ${{ secrets.DEV_CONTROLLER_HOST }}
           CONTROLLER_OAUTH_TOKEN: ${{ secrets.DEV_CONTROLLER_OAUTH_TOKEN }}
           CONTROLLER_VERIFY_SSL: "false"
@@ -164,6 +165,7 @@ jobs:
           ansible-playbook -i inventory/inventory_prod.yml playbooks/deploy_cac.yml \
             -e "target_env=prod"
         env:
+          IMAGE_NAME: ghcr.io/pbuehl-redhat/aap-configuration-as-code/cac-ee
           CONTROLLER_HOST: ${{ secrets.PROD_CONTROLLER_HOST }}
           CONTROLLER_OAUTH_TOKEN: ${{ secrets.PROD_CONTROLLER_OAUTH_TOKEN }}
           CONTROLLER_VERIFY_SSL: "true"
