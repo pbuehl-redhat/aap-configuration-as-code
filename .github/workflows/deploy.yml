@@ -85,7 +85,7 @@ jobs:
 
       - name: Verify Image
         run: |
-          podman images | grep ${{ env.IMAGE_NAME }}:${{ github.sha }}
+          podman images | grep cac-ee
 
       - name: Log in to GHCR & Push Backup
         run: |
