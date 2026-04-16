@@ -143,6 +143,7 @@ jobs:
           CONTROLLER_HOST: ${{ secrets.DEV_CONTROLLER_HOST }}
           CONTROLLER_OAUTH_TOKEN: ${{ secrets.DEV_CONTROLLER_OAUTH_TOKEN }}
           CONTROLLER_VERIFY_SSL: "false"
+          ANSIBLE_ASYNC_DIR: /tmp/.ansible_async
 
   deploy_production:
     name: Declarative Deployment - PROD
@@ -166,3 +167,4 @@ jobs:
           CONTROLLER_HOST: ${{ secrets.PROD_CONTROLLER_HOST }}
           CONTROLLER_OAUTH_TOKEN: ${{ secrets.PROD_CONTROLLER_OAUTH_TOKEN }}
           CONTROLLER_VERIFY_SSL: "true"
+          ANSIBLE_ASYNC_DIR: /tmp/.ansible_async
