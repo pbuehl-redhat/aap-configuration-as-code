@@ -54,6 +54,12 @@ jobs:
         # Runs ansible-builder inside the subdirectory where your .yml lives
         working-directory: execution-environment
         run: |
+          ansible-galaxy install -r requirements.yml
+
+      - name: Build Execution Environment
+        # Runs ansible-builder inside the subdirectory where your .yml lives
+        working-directory: execution-environment
+        run: |
           ansible-builder build -t my-custom-ee:latest -v 3
 
       - name: Verify Image
