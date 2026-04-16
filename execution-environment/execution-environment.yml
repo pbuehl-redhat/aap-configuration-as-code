@@ -23,8 +23,12 @@ dependencies:
 
 additional_build_steps:
   prepend_galaxy:
+    - RUN mkdir -p /etc/ansible
     - COPY _build/configs/ansible.cfg /etc/ansible/ansible.cfg
   append_base: |
-    RUN microdnf install -y git && microdnf clean all
+    RUN microdnf install -y git tar && microdnf clean all
     RUN curl -fsSL https://rpm.releases.hashicorp.com/RHEL/hashicorp.repo -o /etc/yum.repos.d/hashicorp.repo
     RUN microdnf install -y terraform && microdnf clean all
+    RUN curl -LO https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/openshift-client-linux.tar.gz && \
+        tar -xzf openshift-client-linux.tar.gz -C /usr/local/bin oc kubectl && \
+        rm -f openshift-client-linux.tar.gz
