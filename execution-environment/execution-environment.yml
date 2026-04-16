@@ -18,8 +18,18 @@ dependencies:
   ansible_runner:
     package_pip: ansible-runner
   galaxy: requirements.yml
-  # python: requirements-python.txt
-  system: ee/bindep.txt
+
+  # Inject system build tools needed to compile Python packages
+  system:
+    - gcc [platform:rpm]
+    - python3.12-devel [platform:rpm]
+    - pkg-config [platform:rpm]
+    - systemd-devel [platform:rpm]
+
+  # Inject Python build tools right where Ansible Builder expects them
+  python:
+    - setuptools
+    - wheel
 
 additional_build_steps:
   prepend_galaxy:
@@ -29,13 +39,3 @@ additional_build_steps:
   append_galaxy:
     # yamllint disable-line rule:line-length
     - RUN sed -i '/openshift-clients/d' /usr/share/ansible/collections/ansible_collections/kubernetes/core/bindep.txt || true
-
-  append_base: |
-    RUN microdnf install -y git tar && microdnf clean all
-    RUN curl -fsSL https://rpm.releases.hashicorp.com/RHEL/hashicorp.repo -o /etc/yum.repos.d/hashicorp.repo
-    RUN microdnf install -y terraform && microdnf clean all
-    RUN curl -LO https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/openshift-client-linux.tar.gz && \
-        tar -xzf openshift-client-linux.tar.gz -C /usr/local/bin oc kubectl && \
-        rm -f openshift-client-linux.tar.gz
-    # Inject setuptools for Python 3.12 compilation
-    RUN python3 -m pip install setuptools
