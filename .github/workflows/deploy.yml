@@ -16,7 +16,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  IMAGE_NAME: ghcr.io/${{ github.repository }}/johnlucca-ee
+  IMAGE_NAME: ghcr.io/${{ github.repository }}/cac-ee
 
 jobs:
   lint:
@@ -81,18 +81,29 @@ jobs:
       - name: Build Execution Environment
         working-directory: execution-environment
         run: |
-          ansible-builder build -t my-custom-ee:latest -v 3
+          ansible-builder build -t ${{ env.IMAGE_NAME }}:${{ github.sha }}
 
       - name: Verify Image
         run: |
-          podman images | grep localhost/my-custom-ee
+          podman images | grep ${{ env.IMAGE_NAME }}:${{ github.sha }}
+
+      - name: Log in to GHCR & Push Backup
+        run: |
+          podman login ghcr.io -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
+          podman push ${{ env.IMAGE_NAME }}:${{ github.sha }}
+
+      - name: Push Latest Tag (Main branch only)
+        if: github.ref == 'refs/heads/main'
+        run: |
+          podman tag ${{ env.IMAGE_NAME }}:${{ github.sha }} ${{ env.IMAGE_NAME }}:latest
+          podman push ${{ env.IMAGE_NAME }}:latest
 
   dry_run_validation:
     name: Dry-Run API Simulation
     needs: build_ee
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/${{ github.repository }}/johnlucca-ee:${{ github.sha }}
+      image: ghcr.io/${{ github.repository }}/cac-ee:${{ github.sha }}
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
