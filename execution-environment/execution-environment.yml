@@ -37,3 +37,5 @@ additional_build_steps:
     RUN curl -LO https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/openshift-client-linux.tar.gz && \
         tar -xzf openshift-client-linux.tar.gz -C /usr/local/bin oc kubectl && \
         rm -f openshift-client-linux.tar.gz
+    # Inject setuptools for Python 3.12 compilation
+    RUN python3 -m pip install setuptools
