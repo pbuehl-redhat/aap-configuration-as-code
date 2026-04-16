@@ -31,51 +31,29 @@ jobs:
           password: ${{ secrets.PAH_PASSWORD }}
 
       - name: Create Ansible Auth Files
-        # Tells the runner to execute this step inside your subdirectory
         working-directory: execution-environment
         env:
           AH_TOKEN: ${{ secrets.AH_TOKEN }}
         run: |
-          echo -n "$AH_TOKEN" > galaxy-rh-token
           cat <<EOF > ansible.cfg
           [galaxy]
-          # Define the order in which servers are searched
           server_list = published, validated, release
 
-          # Red Hat Certified Collections
           [galaxy_server.published]
           url=https://console.redhat.com/api/automation-hub/content/published/
           auth_url=https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token
-          token_path=/etc/ansible/rh_token
+          token=$AH_TOKEN
 
-          # Red Hat Validated Collections (for infra.* namespaces)
           [galaxy_server.validated]
           url=https://console.redhat.com/api/automation-hub/content/validated/
           auth_url=https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token
-          token_path=/etc/ansible/rh_token
+          token=$AH_TOKEN
 
-          # Public Ansible Galaxy (for amazon.aws, etc.)
           [galaxy_server.release]
           url=https://galaxy.ansible.com/
           EOF
 
-      - name: Install Ansible Galaxy Collections
-        env:
-          ANSIBLE_GALAXY_SERVER_LIST: "automation_hub, galaxy"
-          # Red Hat Automation Hub config
-          ANSIBLE_GALAXY_SERVER_AUTOMATION_HUB_URL: >-
-            https://console.redhat.com/api/automation-hub/content/published/
-          ANSIBLE_GALAXY_SERVER_AUTOMATION_HUB_AUTH_URL: >-
-            https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token
-          ANSIBLE_GALAXY_SERVER_AUTOMATION_HUB_TOKEN: ${{ secrets.AH_TOKEN }}
-          # The missing community Galaxy config
-          ANSIBLE_GALAXY_SERVER_GALAXY_URL: "https://galaxy.ansible.com/"
-        run: >
-          ansible-galaxy collection install
-          -r execution-environment/requirements.yml
-
       - name: Build Execution Environment
-        # Runs ansible-builder inside the subdirectory where your .yml lives
         working-directory: execution-environment
         run: |
           ansible-builder build -t my-custom-ee:latest -v 3
