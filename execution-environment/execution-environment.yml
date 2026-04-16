@@ -1,0 +1,41 @@
+---
+version: 3
+
+options:
+  package_manager_path: /usr/bin/microdnf
+
+additional_build_files:
+  - src: ansible.cfg
+    dest: configs
+
+images:
+  base_image:
+    name: registry.redhat.io/ansible-automation-platform-26/ee-minimal-rhel9:latest
+
+dependencies:
+  ansible_core:
+    package_pip: ansible-core
+  ansible_runner:
+    package_pip: ansible-runner
+  galaxy: requirements.yml
+
+  # Inject system build tools needed to compile Python packages
+  system:
+    - gcc [platform:rpm]
+    - python3.12-devel [platform:rpm]
+    - pkg-config [platform:rpm]
+    - systemd-devel [platform:rpm]
+
+  # Inject Python build tools right where Ansible Builder expects them
+  python:
+    - setuptools
+    - wheel
+
+additional_build_steps:
+  prepend_galaxy:
+    - RUN mkdir -p /etc/ansible
+    - COPY _build/configs/ansible.cfg /etc/ansible/ansible.cfg
+
+  append_galaxy:
+    # yamllint disable-line rule:line-length
+    - RUN sed -i '/openshift-clients/d' /usr/share/ansible/collections/ansible_collections/kubernetes/core/bindep.txt || true

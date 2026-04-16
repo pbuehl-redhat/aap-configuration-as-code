@@ -1,0 +1,63 @@
+---
+name: Build Ansible Execution Environment
+
+on:
+  push:
+    branches:
+      - "**"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install ansible-builder
+        run: pip install ansible-builder
+
+      - name: Log in to Red Hat Registry
+        uses: docker/login-action@v3
+        with:
+          registry: registry.redhat.io
+          username: ${{ secrets.PAH_USERNAME }}
+          password: ${{ secrets.PAH_PASSWORD }}
+
+      - name: Create Ansible Auth Files
+        working-directory: execution-environment
+        env:
+          AH_TOKEN: ${{ secrets.AH_TOKEN }}
+        run: |
+          cat <<EOF > ansible.cfg
+          [galaxy]
+          server_list = published, validated, release
+
+          [galaxy_server.published]
+          url=https://console.redhat.com/api/automation-hub/content/published/
+          auth_url=https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token
+          token=$AH_TOKEN
+
+          [galaxy_server.validated]
+          url=https://console.redhat.com/api/automation-hub/content/validated/
+          auth_url=https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token
+          token=$AH_TOKEN
+
+          [galaxy_server.release]
+          url=https://galaxy.ansible.com/
+          EOF
+
+      - name: Build Execution Environment
+        working-directory: execution-environment
+        run: |
+          ansible-builder build -t my-custom-ee:latest -v 3
+
+      - name: Verify Image
+        run: |
+          podman images | grep localhost/my-custom-ee
