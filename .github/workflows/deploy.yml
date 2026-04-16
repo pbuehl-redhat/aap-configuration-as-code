@@ -102,6 +102,7 @@ jobs:
     name: Dry-Run API Simulation
     needs: build_ee
     runs-on: ubuntu-latest
+    environment: development
     container:
       image: ghcr.io/${{ github.repository }}/cac-ee:${{ github.sha }}
       options: --user root    # <--- ADD THIS LINE
@@ -114,7 +115,11 @@ jobs:
           ansible-playbook -i inventory/inventory_dev.yml playbooks/deploy_cac.yml \
             -e "target_env=dev" \
             -e "ee_image_tag=${{ github.sha }}" \
-            --check
+            --syntax-check
+        env:
+          CONTROLLER_HOST: ${{ secrets.DEV_CONTROLLER_HOST }}
+          CONTROLLER_OAUTH_TOKEN: ${{ secrets.DEV_CONTROLLER_OAUTH_TOKEN }}
+          CONTROLLER_VERIFY_SSL: "false"
 
   deploy_development:
     name: Declarative Deployment - DEV
