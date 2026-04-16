@@ -26,6 +26,10 @@
           {{ (controller_organizations_all | default([])) +
             (controller_organizations_env | default([])) }}
 
+        controller_execution_environments: >-
+          {{ (controller_execution_environments_all | default([])) +
+            (controller_execution_environments_env | default([])) }}
+
         controller_inventories: >-
           {{ (controller_inventories_all | default([])) +
             (controller_inventories_env | default([])) }}
