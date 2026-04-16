@@ -7,8 +7,6 @@ options:
 additional_build_files:
   - src: ansible.cfg
     dest: configs
-  - src: galaxy-rh-token
-    dest: configs
 
 images:
   base_image:
@@ -26,8 +24,6 @@ dependencies:
 additional_build_steps:
   prepend_galaxy:
     - COPY _build/configs/ansible.cfg /etc/ansible/ansible.cfg
-    - COPY _build/configs/galaxy-rh-token /etc/ansible/rh_token
-    - RUN chmod 600 /etc/ansible/rh_token
   append_base: |
     RUN microdnf install -y git && microdnf clean all
     RUN curl -fsSL https://rpm.releases.hashicorp.com/RHEL/hashicorp.repo -o /etc/yum.repos.d/hashicorp.repo
