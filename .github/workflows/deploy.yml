@@ -49,10 +49,17 @@ jobs:
       - name: Install ansible-builder
         run: pip install ansible-builder
 
-      - name: Log in to Red Hat Registry
+      - name: Log in to Red Hat Registry to pull base image
         uses: docker/login-action@v3
         with:
-          registry: aap-aap.apps.cluster-wf7cj-1.dynamic.redhatworkshops.io
+          registry: registry.redhat.io
+          username: ${{ secrets.RH_REGISTRY_USERNAME }}
+          password: ${{ secrets.RH_REGISTRY_PASSWORD }}
+
+      - name: Log in to Private Automation Hub
+        uses: docker/login-action@v3
+        with:
+          registry: https://aap-aap.apps.cluster-wf7cj-1.dynamic.redhatworkshops.io
           username: ${{ secrets.PAH_USERNAME }}
           password: ${{ secrets.PAH_PASSWORD }}
 
