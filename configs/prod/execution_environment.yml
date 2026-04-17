@@ -3,5 +3,5 @@ controller_execution_environments_env:
   - name: "Johnlucca_Custom_EE_Development"
     description: "Development Execution Environment pointing to latest"
     image: "aap-aap.apps.cluster-wf7cj-1.dynamic.redhatworkshops.io/cac-ee:latest"
-    organization: "Johnlucca_Global_Admin"
+    organization: "Default"
     pull: "always"

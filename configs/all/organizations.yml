@@ -1,5 +1,0 @@
----
-# Unified Platform Gateway Organizations
-controller_organizations_all:
-  - name: "Johnlucca_Global_Admin"
-    description: "Super Admin Organization for Platform Management"
