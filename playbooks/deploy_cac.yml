@@ -63,119 +63,14 @@
             (controller_roles_env | default([])) }}
       tags: always
 
-    - name: "Phase 4a: Deploy Organizations"
-      ansible.controller.organization:
-        name: "{{ item.name }}"
-        description: "{{ item.description | default(omit) }}"
-        state: present
-      loop: "{{ controller_organizations | default([]) }}"
-      tags: dispatch
-
-    - name: "Phase 4b: Deploy Execution Environments"
-      ansible.controller.execution_environment:
-        name: "{{ item.name }}"
-        description: "{{ item.description | default(omit) }}"
-        image: "{{ item.image }}"
-        organization: "{{ item.organization | default(omit) }}"
-        pull: "{{ item.pull | default('missing') }}"
-        state: present
-      loop: "{{ controller_execution_environments | default([]) }}"
-      tags: dispatch
-
-    - name: "Phase 4c: Deploy Projects"
-      ansible.controller.project:
-        name: "{{ item.name }}"
-        organization: "{{ item.organization }}"
-        scm_type: "{{ item.scm_type | default(omit) }}"
-        scm_url: "{{ item.scm_url | default(omit) }}"
-        scm_branch: "{{ item.scm_branch | default(omit) }}"
-        state: present
-      loop: "{{ controller_projects | default([]) }}"
-      tags: dispatch
-
-    - name: "Phase 4d: Deploy Inventories"
-      ansible.controller.inventory:
-        name: "{{ item.name }}"
-        organization: "{{ item.organization }}"
-        description: "{{ item.description | default(omit) }}"
-        state: present
-      loop: "{{ controller_inventories | default([]) }}"
-      tags: dispatch
-
-    - name: "Phase 4e: Deploy Groups"
-      ansible.controller.group:
-        name: "{{ item.name }}"
-        inventory: "{{ item.inventory }}"
-        description: "{{ item.description | default(omit) }}"
-        state: present
-      loop: "{{ controller_groups | default([]) }}"
-      tags: dispatch
-
-    - name: "Phase 4f: Deploy Hosts"
-      ansible.controller.host:
-        name: "{{ item.name }}"
-        inventory: "{{ item.inventory }}"
-        description: "{{ item.description | default(omit) }}"
-        state: present
-      loop: "{{ controller_hosts | default([]) }}"
-      tags: dispatch
-
-    - name: "Phase 4g: Deploy Inventory Sources"
-      ansible.controller.inventory_source:
-        name: "{{ item.name }}"
-        inventory: "{{ item.inventory }}"
-        source: "{{ item.source }}"
-        description: "{{ item.description | default(omit) }}"
-        state: present
-      loop: "{{ controller_inventory_sources | default([]) }}"
-      tags: dispatch
-
-    - name: "Phase 4h: Deploy Job Templates"
-      ansible.controller.job_template:
-        name: "{{ item.name }}"
-        description: "{{ item.description | default(omit) }}"
-        organization: "{{ item.organization }}"
-        project: "{{ item.project }}"
-        playbook: "{{ item.playbook }}"
-        inventory: "{{ item.inventory }}"
-        job_type: "{{ item.job_type | default('run') }}"
-        verbosity: "{{ item.verbosity | default(0) }}"
-        timeout: "{{ item.timeout | default(0) }}"
-        allow_simultaneous: "{{ item.allow_simultaneous | default(false) }}"
-        use_fact_cache: "{{ item.use_fact_cache | default(false) }}"
-        survey_enabled: "{{ item.survey_enabled | default(false) }}"
-        become_enabled: "{{ item.become_enabled | default(false) }}"
-        diff_mode: "{{ item.diff_mode | default(false) }}"
-        ask_variables_on_launch: "{{ item.ask_variables_on_launch | default(false) }}"
-        execution_environment: "{{ item.execution_environment | default(omit) }}"
-        state: present
-      loop: "{{ controller_job_templates | default([]) }}"
-      tags: dispatch
-
-    - name: "Phase 4i: Deploy Workflow Job Templates"
-      ansible.controller.workflow_job_template:
-        name: "{{ item.name }}"
-        description: "{{ item.description | default(omit) }}"
-        organization: "{{ item.organization }}"
-        inventory: "{{ item.inventory | default(omit) }}"
-        state: present
-      loop: "{{ controller_workflow_job_templates | default([]) }}"
-      tags: dispatch
-
-    - name: "Phase 4j: Deploy RBAC Roles"
-      ansible.controller.role:
-        user: "{{ item.user | default(omit) }}"
-        team: "{{ item.team | default(omit) }}"
-        role: "{{ item.role }}"
-        target_team: "{{ item.target_team | default(omit) }}"
-        organization: "{{ item.organization | default(omit) }}"
-        project: "{{ item.project | default(omit) }}"
-        inventory: "{{ item.inventory | default(omit) }}"
-        job_template: "{{ item.job_template | default(omit) }}"
-        state: present
-      loop: "{{ controller_roles | default([]) }}"
+    - name: "Phase 4: Dispatch Configuration to AAP API"
+      ansible.builtin.include_role:
+        name: ansible.platform.dispatch
       tags: dispatch
 
     - name: "Phase 5: Output Consolidated Execution Logs"
       ansible.builtin.debug:
-        msg: "Deployment completed. Individual module errors (if any) were displayed above."
+        var: ansible_platform_role_errors
+      when:
+        - ansible_platform_role_errors is defined
+        - ansible_platform_role_errors | length > 0
