@@ -5,7 +5,6 @@
   gather_facts: false
   vars:
     env: "{{ target_env | default('dev') }}"
-    aap_configuration_collect_logs: true
 
   tasks:
     - name: "Phase 1: Load Universal Baseline Configurations"
@@ -63,14 +62,141 @@
             (controller_roles_env | default([])) }}
       tags: always
 
-    - name: "Phase 4: Dispatch Configuration to AAP API"
-      ansible.builtin.include_role:
-        name: infra.aap_configuration.dispatch
+    # -------------------------------------------------------------------------
+    # Phase 4: Apply Configuration in Dependency Order
+    # (Orgs -> EEs -> Projects -> Inventories -> Sources -> Hosts/Groups ->
+    #  Job Templates -> Workflows -> RBAC)
+    # -------------------------------------------------------------------------
+
+    - name: "Phase 4a: Create Organizations"
+      ansible.platform.organization:
+        name: "{{ item.name }}"
+        description: "{{ item.description | default(omit) }}"
+        state: "{{ item.state | default('present') }}"
+      loop: "{{ controller_organizations | default([]) }}"
       tags: dispatch
 
-    - name: "Phase 5: Output Consolidated Execution Logs"
-      ansible.builtin.debug:
-        var: aap_configuration_role_errors
-      when:
-        - aap_configuration_role_errors is defined
-        - aap_configuration_role_errors | length > 0
+    - name: "Phase 4b: Create Execution Environments"
+      ansible.controller.execution_environment:
+        name: "{{ item.name }}"
+        description: "{{ item.description | default(omit) }}"
+        image: "{{ item.image }}"
+        organization: "{{ item.organization | default(omit) }}"
+        pull: "{{ item.pull | default(omit) }}"
+        credential: "{{ item.credential | default(omit) }}"
+        state: "{{ item.state | default('present') }}"
+      loop: "{{ controller_execution_environments | default([]) }}"
+      tags: dispatch
+
+    - name: "Phase 4c: Create Projects"
+      ansible.controller.project:
+        name: "{{ item.name }}"
+        description: "{{ item.description | default(omit) }}"
+        organization: "{{ item.organization }}"
+        scm_type: "{{ item.scm_type | default(omit) }}"
+        scm_url: "{{ item.scm_url | default(omit) }}"
+        scm_branch: "{{ item.scm_branch | default(omit) }}"
+        scm_credential: "{{ item.scm_credential | default(omit) }}"
+        scm_update_on_launch: "{{ item.scm_update_on_launch | default(omit) }}"
+        wait: true
+        state: "{{ item.state | default('present') }}"
+      loop: "{{ controller_projects | default([]) }}"
+      tags: dispatch
+
+    - name: "Phase 4d: Create Inventories"
+      ansible.controller.inventory:
+        name: "{{ item.name }}"
+        description: "{{ item.description | default(omit) }}"
+        organization: "{{ item.organization }}"
+        kind: "{{ item.kind | default(omit) }}"
+        variables: "{{ item.variables | default(omit) }}"
+        state: "{{ item.state | default('present') }}"
+      loop: "{{ controller_inventories | default([]) }}"
+      tags: dispatch
+
+    - name: "Phase 4e: Create Inventory Sources"
+      ansible.controller.inventory_source:
+        name: "{{ item.name }}"
+        description: "{{ item.description | default(omit) }}"
+        inventory: "{{ item.inventory }}"
+        source: "{{ item.source | default(omit) }}"
+        source_project: "{{ item.source_project | default(omit) }}"
+        source_path: "{{ item.source_path | default(omit) }}"
+        credential: "{{ item.credential | default(omit) }}"
+        update_on_launch: "{{ item.update_on_launch | default(omit) }}"
+        state: "{{ item.state | default('present') }}"
+      loop: "{{ controller_inventory_sources | default([]) }}"
+      tags: dispatch
+
+    - name: "Phase 4f: Create Hosts"
+      ansible.controller.host:
+        name: "{{ item.name }}"
+        description: "{{ item.description | default(omit) }}"
+        inventory: "{{ item.inventory }}"
+        variables: "{{ item.variables | default(omit) }}"
+        enabled: "{{ item.enabled | default(omit) }}"
+        state: "{{ item.state | default('present') }}"
+      loop: "{{ controller_hosts | default([]) }}"
+      tags: dispatch
+
+    - name: "Phase 4g: Create Groups"
+      ansible.controller.group:
+        name: "{{ item.name }}"
+        description: "{{ item.description | default(omit) }}"
+        inventory: "{{ item.inventory }}"
+        variables: "{{ item.variables | default(omit) }}"
+        hosts: "{{ item.hosts | default(omit) }}"
+        children: "{{ item.children | default(omit) }}"
+        state: "{{ item.state | default('present') }}"
+      loop: "{{ controller_groups | default([]) }}"
+      tags: dispatch
+
+    - name: "Phase 4h: Create Job Templates"
+      ansible.controller.job_template:
+        name: "{{ item.name }}"
+        description: "{{ item.description | default(omit) }}"
+        organization: "{{ item.organization | default(omit) }}"
+        project: "{{ item.project }}"
+        playbook: "{{ item.playbook }}"
+        inventory: "{{ item.inventory | default(omit) }}"
+        job_type: "{{ item.job_type | default('run') }}"
+        verbosity: "{{ item.verbosity | default(omit) }}"
+        timeout: "{{ item.timeout | default(omit) }}"
+        allow_simultaneous: "{{ item.allow_simultaneous | default(omit) }}"
+        use_fact_cache: "{{ item.use_fact_cache | default(omit) }}"
+        survey_enabled: "{{ item.survey_enabled | default(omit) }}"
+        become_enabled: "{{ item.become_enabled | default(omit) }}"
+        diff_mode: "{{ item.diff_mode | default(omit) }}"
+        ask_variables_on_launch: "{{ item.ask_variables_on_launch | default(omit) }}"
+        execution_environment: "{{ item.execution_environment | default(omit) }}"
+        credentials: "{{ item.credentials | default(omit) }}"
+        state: "{{ item.state | default('present') }}"
+      loop: "{{ controller_job_templates | default([]) }}"
+      tags: dispatch
+
+    - name: "Phase 4i: Create Workflow Job Templates"
+      ansible.controller.workflow_job_template:
+        name: "{{ item.name }}"
+        description: "{{ item.description | default(omit) }}"
+        organization: "{{ item.organization | default(omit) }}"
+        inventory: "{{ item.inventory | default(omit) }}"
+        extra_vars: "{{ item.extra_vars | default(omit) }}"
+        survey_enabled: "{{ item.survey_enabled | default(omit) }}"
+        state: "{{ item.state | default('present') }}"
+      loop: "{{ controller_workflow_job_templates | default([]) }}"
+      tags: dispatch
+
+    - name: "Phase 4j: Assign Roles / RBAC"
+      ansible.controller.role:
+        user: "{{ item.user | default(omit) }}"
+        team: "{{ item.target_team | default(omit) }}"
+        role: "{{ item.name }}"
+        target_teams: "{{ item.target_teams | default(omit) }}"
+        organizations: "{{ item.organizations | default(omit) }}"
+        projects: "{{ item.projects | default(omit) }}"
+        inventories: "{{ item.inventories | default(omit) }}"
+        job_templates: "{{ item.job_templates | default(omit) }}"
+        workflows: "{{ item.workflows | default(omit) }}"
+        state: "{{ item.state | default('present') }}"
+      loop: "{{ controller_roles | default([]) }}"
+      tags: dispatch

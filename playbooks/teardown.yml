@@ -73,7 +73,7 @@
       tags: teardown
 
     - name: "Phase 9: Remove Organizations"
-      ansible.controller.organization:
+      ansible.platform.organization:
         name: "{{ item.name }}"
         state: absent
       loop: "{{ controller_organizations | default([]) }}"
