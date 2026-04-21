@@ -60,12 +60,30 @@ To run the pipeline, you must configure the following Secrets in your GitHub rep
 | `PROD_CONTROLLER_HOST` | API URL for the Prod AAP Instance
 
 ### 2. Local Development
-Before committing, install the pre-commit hooks to ensure code quality:
+
+Local tooling (`ansible-core`, `ansible-lint`, `yamllint`, `pre-commit`) is
+managed with [pixi](https://pixi.sh). Install pixi once per machine, then from
+the repo root:
 
 ```bash
-pip install pre-commit ansible-lint yamllint
-pre-commit install
+pixi install                  # create the pinned env (.pixi/)
+pixi run setup                # installs the pre-commit hooks
+pixi run install-collections  # installs Ansible collections from execution-environment/requirements.yml
 ```
+
+Common tasks:
+
+```bash
+pixi run lint                 # yamllint + ansible-lint
+pixi run syntax-check         # ansible-playbook --syntax-check against dev inventory
+pixi run deploy-dev           # manual deploy to dev
+pixi run deploy-prod          # manual deploy to prod
+```
+
+Run any other command inside the pinned env with `pixi run <cmd>` or drop into
+a shell with `pixi shell`. The pre-commit hooks installed by `pixi run setup`
+expect `ansible-lint` to be on `PATH`, so invoke them via
+`pixi run pre-commit run --all-files`.
 
 ---
 
