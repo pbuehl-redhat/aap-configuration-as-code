@@ -65,12 +65,12 @@
 
     - name: "Phase 4: Dispatch Configuration to AAP API"
       ansible.builtin.include_role:
-        name: ansible.platform.dispatch
+        name: infra.aap_configuration.dispatch
       tags: dispatch
 
     - name: "Phase 5: Output Consolidated Execution Logs"
       ansible.builtin.debug:
-        var: ansible_platform_role_errors
+        var: aap_configuration_role_errors
       when:
-        - ansible_platform_role_errors is defined
-        - ansible_platform_role_errors | length > 0
+        - aap_configuration_role_errors is defined
+        - aap_configuration_role_errors | length > 0
