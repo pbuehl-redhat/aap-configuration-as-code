@@ -1,10 +1,6 @@
 ---
 collections:
-  - name: infra.aap_configuration
-  - name: infra.aap_configuration_extended
-  - name: infra.controller_configuration
-  - name: infra.aap_utilities
-  # Explicitly pin the Red Hat certified collections
+  # Red Hat certified collections only
   - name: ansible.controller
     version: ">=4.6.0"      # Use >=4.7.0 if you are on AAP 2.6+
   - name: ansible.platform
