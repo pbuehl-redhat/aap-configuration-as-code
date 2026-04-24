@@ -1,7 +1,7 @@
 ---
 controller_execution_environments_env:
-  - name: "Johnlucca_Custom_EE_Development"
-    description: "Development Execution Environment pointing to latest"
+  - name: "CAC_Custom_EE_Production"
+    description: "Production Execution Environment pointing to latest"
     image: "aap-aap.apps.cluster-wf7cj-1.dynamic.redhatworkshops.io/cac-ee:latest"
     organization: "Default"
     pull: "always"

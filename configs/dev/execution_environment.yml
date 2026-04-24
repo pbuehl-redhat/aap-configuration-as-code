@@ -1,6 +1,6 @@
 ---
 controller_execution_environments_env:
-  - name: "Johnlucca_Custom_EE_Development"
+  - name: "CAC_Custom_EE_Development"
     description: "Development Execution Environment pointing to exact Git SHA"
     image: "ghcr.io/pbuehl-redhat/aap-configuration-as-code/cac-ee:{{ ee_image_tag | default('latest') }}"
     organization: "Default"
