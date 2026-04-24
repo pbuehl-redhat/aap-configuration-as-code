@@ -5,11 +5,11 @@ repos:
     hooks:
       - id: yamllint
 
-  # Use the local environment instead of building a broken Python 3.13 sandbox
+  # Run ansible-lint from the pixi-managed env so it works from any shell
   - repo: local
     hooks:
       - id: ansible-lint
         name: ansible-lint
-        entry: ansible-lint --profile production
+        entry: pixi run ansible-lint --profile production
         language: system
         files: \.(yaml|yml)$

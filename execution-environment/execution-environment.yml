@@ -1,25 +1,34 @@
 ---
+# Schema version for ansible-builder configuration
 version: 3
 
+# Define the package manager used by the base image (RHEL 9 minimal uses microdnf)
 options:
   package_manager_path: /usr/bin/microdnf
 
+# Additional files to copy into the build context before the container build starts
 additional_build_files:
   - src: ansible.cfg
     dest: configs
 
+# Defines the starting container image for the execution environment
 images:
   base_image:
+    # Using the minimal RHEL 9 AAP 2.6 image as a lightweight starting point
     name: registry.redhat.io/ansible-automation-platform-26/ee-minimal-rhel9:latest
 
+# Packages, collections, and tools to install into the container image
 dependencies:
+  # The core Ansible package
   ansible_core:
     package_pip: ansible-core
+  # The runner package that AAP uses to execute playbooks
   ansible_runner:
     package_pip: ansible-runner
+  # File containing the list of Ansible Collections to download and install
   galaxy: requirements.yml
 
-  # Inject system build tools needed to compile Python packages
+  # Inject system build tools needed to compile Python packages from source
   system:
     - gcc [platform:rpm]
     - python3.12-devel [platform:rpm]
@@ -31,11 +40,18 @@ dependencies:
     - setuptools
     - wheel
 
+# Custom container build instructions (standard Containerfile/Dockerfile commands)
 additional_build_steps:
+  # Steps to run BEFORE installing Ansible Galaxy collections
   prepend_galaxy:
+    # Create the ansible configuration directory
     - RUN mkdir -p /etc/ansible
+    # Copy custom ansible.cfg to ensure collections authenticate properly during build (e.g. against Automation Hub)
     - COPY _build/configs/ansible.cfg /etc/ansible/ansible.cfg
 
+  # Steps to run AFTER installing Ansible Galaxy collections
   append_galaxy:
+    # Workaround: remove openshift-clients dependency from kubernetes.core collection
+    # to avoid build failures or container bloat if not needed in this specific EE.
     # yamllint disable-line rule:line-length
     - RUN sed -i '/openshift-clients/d' /usr/share/ansible/collections/ansible_collections/kubernetes/core/bindep.txt || true
