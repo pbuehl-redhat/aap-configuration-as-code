@@ -41,7 +41,7 @@ The core of the deployment is the `playbooks/deploy_cac.yml` file. It follows a 
 The pipeline defined in `.github/workflows/deploy.yml` includes:
 
 * **Linting:** `yamllint` and `ansible-lint` to enforce style and best practices.
-* **Security:** `ggshield` scanning to prevent secret leakage.
+* **Secret Scanning:** `gitleaks` scans full git history on every push/PR to prevent secret leakage.
 * **Dry Run:** Validates the API payload against the AAP instance without making changes (`--check` mode).
 * **Environment Gates:** Automatic deployment to development on push; manual approval required for production.
 
