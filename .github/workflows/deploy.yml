@@ -20,6 +20,19 @@ env:
   AAP_IMAGE_NAME: aap-aap.apps.cluster-wf7cj-1.dynamic.redhatworkshops.io/cac-ee
 
 jobs:
+  secret_scan:
+    name: Secret Scanning (gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Run gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   lint:
     name: Linting & Code Quality
     runs-on: ubuntu-latest
@@ -45,7 +58,7 @@ jobs:
 
   build_ee:
     name: Build Execution Environment
-    needs: [lint]
+    needs: [lint, secret_scan]
     runs-on: [ubuntu-latest]
     permissions:
       contents: read
